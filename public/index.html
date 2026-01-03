@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Calico - 24-bit / 48kHz Lossless Streaming</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <img src="RadioCalicoLogoTM.png" alt="Radio Calico Logo" class="logo">
+            <h1 class="site-title">Radio Calico</h1>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- Player Section -->
+        <section class="player-section">
+            <div class="player-grid">
+                <!-- Album Art -->
+                <div class="album-art-container">
+                    <img id="albumArt" src="https://via.placeholder.com/300x300/231F20/D8F2D5?text=Radio+Calico"
+                         alt="Album Art" class="album-art">
+                </div>
+
+                <!-- Track Info -->
+                <div class="track-info">
+                    <p class="now-playing-label">Now Playing</p>
+                    <h2 class="artist-name" id="artistName">Radio Calico</h2>
+                    <p class="track-title" id="trackTitle">24-bit Lossless Streaming</p>
+                    <p class="album-name" id="albumName">Crystal-Clear Audio</p>
+
+                    <div class="audio-quality">
+                        <p><strong>Source quality:</strong> 16-bit 44.1kHz</p>
+                        <p><strong>Stream quality:</strong> 48kHz FLAC / HLS Lossless</p>
+                    </div>
+
+                    <!-- Single Audio Control Bar -->
+                    <div class="audio-controls">
+                        <div class="controls-container">
+                            <button id="playPauseBtn" class="control-button" title="Play">
+                                <span id="playIcon">▶</span>
+                            </button>
+
+                            <span id="elapsedTime" class="elapsed-time">0:00:00</span>
+
+                            <div class="volume-control">
+                                <span style="color: var(--cream);">🔊</span>
+                                <input type="range" id="volumeSlider" class="volume-slider"
+                                       min="0" max="100" value="70">
+                                <span id="volumeValue" style="color: var(--cream); min-width: 40px;">70%</span>
+                            </div>
+
+                            <span id="statusText" class="status-text">Ready to play</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="mt-2">
+            <h2>Ad-Free, High-Fidelity Streaming</h2>
+            <p style="margin-top: 1rem; line-height: 1.8;">
+                Kick back and enjoy crystal-clear audio with Radio Calico's 48kHz FLAC lossless streaming.
+                No ads, no subscriptions, no data collection—just pure, uncompressed music from the 70s, 80s, and 90s.
+            </p>
+        </section>
+
+        <!-- Recently Played Tracks -->
+        <section class="previous-tracks">
+            <h2>Recently played:</h2>
+            <ul class="track-list" id="recentlyPlayed">
+                <li class="loading-placeholder">Loading recently played tracks...</li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Radio Calico. All rights reserved. | Ad-free • Data-free • Subscription-free</p>
+    </footer>
+
+    <!-- Hidden Audio Element -->
+    <audio id="audioPlayer" preload="none"></audio>
+
+    <!-- Player JavaScript -->
+    <script src="player.js"></script>
+</body>
+</html>

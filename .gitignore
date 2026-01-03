@@ -1,0 +1,9 @@
+node_modules/
+venv/
+database.sqlite
+flask_database.sqlite
+.env
+*.log
+.DS_Store
+__pycache__/
+*.pyc

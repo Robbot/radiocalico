@@ -1,0 +1,381 @@
+/* Radio Calico Brand Styles */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
+
+/* CSS Variables - Brand Colors */
+:root {
+    --mint: #D8F2D5;
+    --forest-green: #1F4E23;
+    --teal: #38A29D;
+    --calico-orange: #EFA63C;
+    --charcoal: #231F20;
+    --cream: #F5EADA;
+    --white: #FFFFFF;
+}
+
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--charcoal);
+    background-color: var(--white);
+}
+
+/* Typography */
+h1 {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 700;
+    font-size: 3rem;
+    line-height: 1.2;
+    color: var(--white);
+}
+
+h2 {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 600;
+    font-size: 2.25rem;
+    line-height: 1.3;
+    color: var(--forest-green);
+}
+
+h3 {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 500;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    color: var(--charcoal);
+}
+
+/* Header / Nav Bar */
+.nav-bar {
+    background-color: var(--teal);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0 24px;
+}
+
+.logo {
+    height: 50px;
+    width: auto;
+}
+
+.site-title {
+    color: var(--white);
+    font-family: "Montserrat", sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Main Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 64px 24px;
+}
+
+/* Player Section */
+.player-section {
+    background: linear-gradient(135deg, var(--charcoal) 0%, #3a3638 100%);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.player-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .player-grid {
+        grid-template-columns: auto 1fr;
+    }
+}
+
+.album-art-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.album-art {
+    width: 100%;
+    max-width: 300px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.track-info {
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.now-playing-label {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--mint);
+    font-weight: 600;
+}
+
+.artist-name {
+    font-family: "Montserrat", sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.track-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.album-name {
+    font-size: 1rem;
+    color: var(--cream);
+    font-style: italic;
+}
+
+.audio-quality {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: rgba(216, 242, 213, 0.1);
+    border-radius: 4px;
+    border-left: 4px solid var(--mint);
+}
+
+.audio-quality p {
+    font-size: 0.875rem;
+    color: var(--mint);
+    margin: 0.25rem 0;
+}
+
+/* Audio Controls */
+.audio-controls {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.controls-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.control-button {
+    background: var(--teal);
+    border: none;
+    color: var(--white);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 1.2rem;
+}
+
+.control-button:hover {
+    background: var(--calico-orange);
+    transform: scale(1.05);
+}
+
+.control-button:active {
+    transform: scale(0.95);
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    max-width: 300px;
+}
+
+.volume-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.3);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--teal);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    background: var(--calico-orange);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--teal);
+    cursor: pointer;
+    border: none;
+}
+
+.elapsed-time {
+    color: var(--mint);
+    font-size: 1rem;
+    font-family: "Montserrat", monospace;
+    font-weight: 600;
+    min-width: 80px;
+}
+
+.status-text {
+    color: var(--cream);
+    font-size: 0.875rem;
+    margin-left: auto;
+}
+
+/* Previous Tracks Section */
+.previous-tracks {
+    background-color: var(--mint);
+    padding: 2rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.previous-tracks h2 {
+    margin-bottom: 1rem;
+}
+
+.track-list {
+    list-style: none;
+}
+
+.track-list li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(31, 78, 35, 0.2);
+    color: var(--charcoal);
+}
+
+.track-list li:last-child {
+    border-bottom: none;
+}
+
+.track-artist {
+    font-weight: 600;
+    color: var(--forest-green);
+}
+
+.track-song {
+    font-style: italic;
+    color: var(--charcoal);
+}
+
+/* Buttons */
+.btn-primary {
+    background: var(--forest-green);
+    color: var(--white);
+    border: none;
+    border-radius: 4px;
+    padding: 0.75rem 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: var(--teal);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--forest-green);
+    border: 2px solid var(--forest-green);
+    border-radius: 4px;
+    padding: 0.75rem 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: var(--mint);
+}
+
+/* Loading Spinner */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: var(--white);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Footer */
+footer {
+    background-color: var(--cream);
+    padding: 2rem 0;
+    text-align: center;
+    margin-top: 4rem;
+}
+
+footer p {
+    color: var(--forest-green);
+    font-size: 0.875rem;
+}
+
+/* Utility Classes */
+.text-center {
+    text-align: center;
+}
+
+.mt-2 {
+    margin-top: 2rem;
+}
+
+.mb-2 {
+    margin-bottom: 2rem;
+}

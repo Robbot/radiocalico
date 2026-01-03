@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Calico - Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: var(--cream);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--forest-green);
+            font-weight: 600;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--teal);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(56,162,157,0.3);
+        }
+        .btn-update {
+            width: 100%;
+            padding: 15px;
+            background: var(--forest-green);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .btn-update:hover {
+            background: var(--teal);
+        }
+        .message {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .message.success {
+            background: var(--mint);
+            color: var(--forest-green);
+            border: 1px solid var(--forest-green);
+        }
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #c62828;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <img src="RadioCalicoLogoTM.png" alt="Radio Calico Logo" class="logo">
+            <h1 class="site-title">Radio Calico - Admin</h1>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <h2>Update Now Playing</h2>
+        <p style="color: var(--charcoal); margin-bottom: 30px;">
+            Manually update the current track information. This will appear on the main player page.
+        </p>
+
+        <form id="updateForm">
+            <div class="form-group">
+                <label for="artist">Artist *</label>
+                <input type="text" id="artist" name="artist" required
+                       placeholder="e.g., Shandi Sinnamon">
+            </div>
+
+            <div class="form-group">
+                <label for="title">Track Title *</label>
+                <input type="text" id="title" name="title" required
+                       placeholder="e.g., He's A Dream">
+            </div>
+
+            <div class="form-group">
+                <label for="album">Album</label>
+                <input type="text" id="album" name="album"
+                       placeholder="e.g., Flashdance Soundtrack">
+            </div>
+
+            <div class="form-group">
+                <label for="year">Year</label>
+                <input type="number" id="year" name="year" min="1900" max="2100"
+                       placeholder="e.g., 1983">
+            </div>
+
+            <button type="submit" class="btn-update">Update Track</button>
+        </form>
+
+        <div id="message" class="message"></div>
+
+        <p style="margin-top: 30px; text-align: center;">
+            <a href="/" style="color: var(--teal);">← Back to Player</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                artist: document.getElementById('artist').value,
+                title: document.getElementById('title').value,
+                album: document.getElementById('album').value || 'Live Stream',
+                year: parseInt(document.getElementById('year').value) || new Date().getFullYear()
+            };
+
+            const messageEl = document.getElementById('message');
+            messageEl.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/update-track', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    messageEl.className = 'message success';
+                    messageEl.textContent = `✓ Track updated: ${formData.artist} - ${formData.title}`;
+                    messageEl.style.display = 'block';
+
+                    // Clear form after 2 seconds
+                    setTimeout(() => {
+                        document.getElementById('updateForm').reset();
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Update failed');
+                }
+            } catch (error) {
+                messageEl.className = 'message error';
+                messageEl.textContent = `✗ Error: ${error.message}`;
+                messageEl.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
