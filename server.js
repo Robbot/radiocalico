@@ -136,6 +136,73 @@ app.post('/api/update-track', (req, res) => {
   proxyReq.end();
 });
 
+// Proxy rating endpoints to Flask
+app.post('/api/tracks/:trackId/rate', (req, res) => {
+  const options = {
+    hostname: 'localhost',
+    port: FLASK_PORT,
+    path: `/api/tracks/${req.params.trackId}/rate`,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    let data = '';
+    proxyRes.on('data', (chunk) => {
+      data += chunk;
+    });
+    proxyRes.on('end', () => {
+      res.status(proxyRes.statusCode).setHeader('Content-Type', 'application/json');
+      res.send(data);
+    });
+  });
+
+  proxyReq.on('error', (error) => {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to submit rating: ' + error.message
+    });
+  });
+
+  proxyReq.write(JSON.stringify(req.body));
+  proxyReq.end();
+});
+
+app.post('/api/tracks/:trackId/rating-status', (req, res) => {
+  const options = {
+    hostname: 'localhost',
+    port: FLASK_PORT,
+    path: `/api/tracks/${req.params.trackId}/rating-status`,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    let data = '';
+    proxyRes.on('data', (chunk) => {
+      data += chunk;
+    });
+    proxyRes.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(data);
+    });
+  });
+
+  proxyReq.on('error', (error) => {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to check rating status: ' + error.message
+    });
+  });
+
+  proxyReq.write(JSON.stringify(req.body));
+  proxyReq.end();
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`Database: ${process.env.DATABASE_PATH}`);

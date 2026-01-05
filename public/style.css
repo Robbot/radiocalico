@@ -367,6 +367,76 @@ footer p {
     font-size: 0.875rem;
 }
 
+/* Rating Section */
+.rating-section {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background-color: rgba(56, 162, 157, 0.2);
+    border-radius: 8px;
+    border: 2px solid var(--teal);
+}
+
+.rating-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.rating-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--cream);
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    color: var(--cream);
+    font-weight: 600;
+}
+
+.rating-btn:hover:not(:disabled) {
+    background: var(--teal);
+    border-color: var(--calico-orange);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.rating-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.rating-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.rating-btn.active {
+    background: var(--calico-orange);
+    border-color: var(--calico-orange);
+    box-shadow: 0 0 12px rgba(239, 166, 60, 0.5);
+}
+
+.rating-icon {
+    font-size: 1.5rem;
+}
+
+.rating-count {
+    font-size: 1.25rem;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 700;
+    color: var(--cream);
+}
+
+.rating-message {
+    font-size: 0.875rem;
+    color: var(--mint);
+    margin-top: 0.5rem;
+    min-height: 1.25rem;
+}
+
 /* Utility Classes */
 .text-center {
     text-align: center;

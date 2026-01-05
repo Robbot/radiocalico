@@ -40,6 +40,22 @@
                         <p><strong>Stream quality:</strong> 48kHz FLAC / HLS Lossless</p>
                     </div>
 
+                    <!-- Rating Section -->
+                    <div class="rating-section">
+                        <h3 style="color: var(--cream); margin-bottom: 0.5rem; font-size: 1rem;">Rate this track:</h3>
+                        <div class="rating-buttons">
+                            <button id="thumbsUpBtn" class="rating-btn thumbs-up" title="Thumbs Up">
+                                <span class="rating-icon">👍</span>
+                                <span id="thumbsUpCount" class="rating-count">0</span>
+                            </button>
+                            <button id="thumbsDownBtn" class="rating-btn thumbs-down" title="Thumbs Down">
+                                <span class="rating-icon">👎</span>
+                                <span id="thumbsDownCount" class="rating-count">0</span>
+                            </button>
+                        </div>
+                        <p id="ratingMessage" class="rating-message"></p>
+                    </div>
+
                     <!-- Single Audio Control Bar -->
                     <div class="audio-controls">
                         <div class="controls-container">

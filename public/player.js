@@ -7,6 +7,8 @@ let isPlaying = false;
 let streamUrl = '';
 let startTime = null;
 let elapsedInterval = null;
+let currentTrackId = null;
+let userId = null;
 
 // DOM Elements
 const playPauseBtn = document.getElementById('playPauseBtn');
@@ -20,10 +22,18 @@ const trackTitle = document.getElementById('trackTitle');
 const albumName = document.getElementById('albumName');
 const albumArt = document.getElementById('albumArt');
 const recentlyPlayed = document.getElementById('recentlyPlayed');
+const thumbsUpBtn = document.getElementById('thumbsUpBtn');
+const thumbsDownBtn = document.getElementById('thumbsDownBtn');
+const thumbsUpCount = document.getElementById('thumbsUpCount');
+const thumbsDownCount = document.getElementById('thumbsDownCount');
+const ratingMessage = document.getElementById('ratingMessage');
 
 // Initialize player when page loads
 document.addEventListener('DOMContentLoaded', async () => {
     audioPlayer = document.getElementById('audioPlayer');
+
+    // Initialize user ID
+    initializeUserId();
 
     // Set initial volume
     audioPlayer.volume = volumeSlider.value / 100;
@@ -62,6 +72,17 @@ async function fetchStreamUrl() {
     }
 }
 
+// Initialize or retrieve user ID from localStorage
+function initializeUserId() {
+    userId = localStorage.getItem('radioCalicoUserId');
+    if (!userId) {
+        // Generate a unique user ID
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('radioCalicoUserId', userId);
+    }
+    console.log('User ID:', userId);
+}
+
 // Setup all event listeners
 function setupEventListeners() {
     // Play/Pause button
@@ -73,6 +94,10 @@ function setupEventListeners() {
         audioPlayer.volume = volume / 100;
         volumeValue.textContent = `${volume}%`;
     });
+
+    // Rating buttons
+    thumbsUpBtn.addEventListener('click', () => handleRating(1));
+    thumbsDownBtn.addEventListener('click', () => handleRating(-1));
 
     // Audio player events
     audioPlayer.addEventListener('playing', () => {
@@ -255,15 +280,117 @@ async function fetchNowPlaying() {
 
         if (data.status === 'success' && data.data) {
             const track = data.data;
+            currentTrackId = track.id;
+
             artistName.textContent = track.artist;
             trackTitle.textContent = track.title;
             albumName.textContent = track.album + (track.year ? ` (${track.year})` : '');
             if (track.album_art_url) {
                 albumArt.src = track.album_art_url;
             }
+
+            // Update rating counts
+            thumbsUpCount.textContent = track.thumbs_up || 0;
+            thumbsDownCount.textContent = track.thumbs_down || 0;
+
+            // Check if user has already rated this track
+            if (currentTrackId) {
+                await checkRatingStatus();
+            }
         }
     } catch (error) {
         console.error('Error fetching now playing:', error);
+    }
+}
+
+// Check if user has already rated the current track
+async function checkRatingStatus() {
+    if (!currentTrackId || !userId) return;
+
+    try {
+        const response = await fetch(`/api/tracks/${currentTrackId}/rating-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: userId })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success' && data.data.has_rated) {
+            // User has already rated this track
+            const ratingType = data.data.rating_type;
+            if (ratingType === 1) {
+                thumbsUpBtn.classList.add('active');
+                thumbsUpBtn.disabled = true;
+                thumbsDownBtn.disabled = true;
+                ratingMessage.textContent = 'You\'ve already rated this track!';
+            } else if (ratingType === -1) {
+                thumbsDownBtn.classList.add('active');
+                thumbsUpBtn.disabled = true;
+                thumbsDownBtn.disabled = true;
+                ratingMessage.textContent = 'You\'ve already rated this track!';
+            }
+        } else {
+            // User hasn't rated, enable buttons
+            thumbsUpBtn.classList.remove('active');
+            thumbsDownBtn.classList.remove('active');
+            thumbsUpBtn.disabled = false;
+            thumbsDownBtn.disabled = false;
+            ratingMessage.textContent = '';
+        }
+    } catch (error) {
+        console.error('Error checking rating status:', error);
+    }
+}
+
+// Handle rating submission
+async function handleRating(ratingType) {
+    if (!currentTrackId || !userId) {
+        ratingMessage.textContent = 'Unable to submit rating. Please try again.';
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/tracks/${currentTrackId}/rate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                rating_type: ratingType
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Update the counts
+            thumbsUpCount.textContent = data.data.thumbs_up;
+            thumbsDownCount.textContent = data.data.thumbs_down;
+
+            // Mark the button as active and disable both
+            if (ratingType === 1) {
+                thumbsUpBtn.classList.add('active');
+            } else {
+                thumbsDownBtn.classList.add('active');
+            }
+            thumbsUpBtn.disabled = true;
+            thumbsDownBtn.disabled = true;
+
+            ratingMessage.textContent = 'Thank you for rating!';
+        } else if (response.status === 409) {
+            // User has already rated
+            ratingMessage.textContent = data.message;
+            await checkRatingStatus();
+        } else {
+            ratingMessage.textContent = 'Error submitting rating: ' + data.message;
+        }
+    } catch (error) {
+        console.error('Error submitting rating:', error);
+        ratingMessage.textContent = 'Error submitting rating. Please try again.';
     }
 }
 

@@ -57,6 +57,17 @@ def init_db():
                 is_current BOOLEAN DEFAULT 0
             )
         ''')
+        db.execute('''
+            CREATE TABLE IF NOT EXISTS ratings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                track_id INTEGER NOT NULL,
+                user_id TEXT NOT NULL,
+                rating_type INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (track_id) REFERENCES tracks (id),
+                UNIQUE (track_id, user_id)
+            )
+        ''')
         db.commit()
 
         # Seed with sample data
@@ -134,6 +145,9 @@ def home():
         <div class="endpoint">
             <a href="/tracks">/tracks</a> - View all tracks in database
         </div>
+        <div class="endpoint">
+            <a href="/ratings">/ratings</a> - View all ratings in database
+        </div>
     </body>
     </html>
     '''
@@ -192,7 +206,7 @@ def now_playing():
     try:
         db = get_db()
         cursor = db.execute('''
-            SELECT artist, title, album, year, album_art_url
+            SELECT id, artist, title, album, year, album_art_url
             FROM tracks
             WHERE is_current = 1
             LIMIT 1
@@ -200,19 +214,35 @@ def now_playing():
         track = cursor.fetchone()
 
         if track:
+            track_dict = dict(track)
+            # Get ratings for this track
+            ratings_cursor = db.execute('''
+                SELECT
+                    SUM(CASE WHEN rating_type = 1 THEN 1 ELSE 0 END) as thumbs_up,
+                    SUM(CASE WHEN rating_type = -1 THEN 1 ELSE 0 END) as thumbs_down
+                FROM ratings
+                WHERE track_id = ?
+            ''', (track_dict['id'],))
+            ratings = ratings_cursor.fetchone()
+            track_dict['thumbs_up'] = ratings['thumbs_up'] or 0
+            track_dict['thumbs_down'] = ratings['thumbs_down'] or 0
+
             return jsonify({
                 'status': 'success',
-                'data': dict(track)
+                'data': track_dict
             })
         else:
             return jsonify({
                 'status': 'success',
                 'data': {
+                    'id': None,
                     'artist': 'Radio Calico',
                     'title': '24-bit Lossless Streaming',
                     'album': 'Crystal-Clear Audio',
                     'year': None,
-                    'album_art_url': 'https://via.placeholder.com/300x300/231F20/D8F2D5?text=Radio+Calico'
+                    'album_art_url': 'https://via.placeholder.com/300x300/231F20/D8F2D5?text=Radio+Calico',
+                    'thumbs_up': 0,
+                    'thumbs_down': 0
                 }
             })
     except Exception as e:
@@ -238,6 +268,121 @@ def recently_played():
             'status': 'success',
             'data': tracks
         })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/tracks/<int:track_id>/rate', methods=['POST'])
+def rate_track(track_id):
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        rating_type = data.get('rating_type')  # 1 for thumbs up, -1 for thumbs down
+
+        if not user_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'user_id is required'
+            }), 400
+
+        if rating_type not in [1, -1]:
+            return jsonify({
+                'status': 'error',
+                'message': 'rating_type must be 1 (thumbs up) or -1 (thumbs down)'
+            }), 400
+
+        db = get_db()
+
+        # Check if track exists
+        track = db.execute('SELECT id FROM tracks WHERE id = ?', (track_id,)).fetchone()
+        if not track:
+            return jsonify({
+                'status': 'error',
+                'message': 'Track not found'
+            }), 404
+
+        # Check if user has already rated this track
+        existing_rating = db.execute('''
+            SELECT rating_type FROM ratings
+            WHERE track_id = ? AND user_id = ?
+        ''', (track_id, user_id)).fetchone()
+
+        if existing_rating:
+            return jsonify({
+                'status': 'error',
+                'message': 'You have already rated this track',
+                'existing_rating': existing_rating['rating_type']
+            }), 409
+
+        # Insert the rating
+        db.execute('''
+            INSERT INTO ratings (track_id, user_id, rating_type)
+            VALUES (?, ?, ?)
+        ''', (track_id, user_id, rating_type))
+        db.commit()
+
+        # Get updated rating counts
+        ratings_cursor = db.execute('''
+            SELECT
+                SUM(CASE WHEN rating_type = 1 THEN 1 ELSE 0 END) as thumbs_up,
+                SUM(CASE WHEN rating_type = -1 THEN 1 ELSE 0 END) as thumbs_down
+            FROM ratings
+            WHERE track_id = ?
+        ''', (track_id,))
+        ratings = ratings_cursor.fetchone()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Rating submitted successfully',
+            'data': {
+                'thumbs_up': ratings['thumbs_up'] or 0,
+                'thumbs_down': ratings['thumbs_down'] or 0
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/tracks/<int:track_id>/rating-status', methods=['POST'])
+def get_rating_status(track_id):
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+
+        if not user_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'user_id is required'
+            }), 400
+
+        db = get_db()
+
+        # Check if user has rated this track
+        existing_rating = db.execute('''
+            SELECT rating_type FROM ratings
+            WHERE track_id = ? AND user_id = ?
+        ''', (track_id, user_id)).fetchone()
+
+        if existing_rating:
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'has_rated': True,
+                    'rating_type': existing_rating['rating_type']
+                }
+            })
+        else:
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'has_rated': False,
+                    'rating_type': None
+                }
+            })
     except Exception as e:
         return jsonify({
             'status': 'error',
@@ -354,6 +499,110 @@ def view_tracks():
                     <td>{track['year'] or 'N/A'}</td>
                     <td>{status}</td>
                     <td>{track['played_at']}</td>
+                </tr>
+            '''
+
+        html += '''
+                </tbody>
+            </table>
+        </body>
+        </html>
+        '''
+        return html
+    except Exception as e:
+        return f'<h1>Error</h1><p>{str(e)}</p>', 500
+
+@app.route('/ratings')
+def view_ratings():
+    try:
+        db = get_db()
+        cursor = db.execute('''
+            SELECT
+                r.id,
+                r.track_id,
+                t.artist,
+                t.title,
+                r.user_id,
+                r.rating_type,
+                r.created_at
+            FROM ratings r
+            JOIN tracks t ON r.track_id = t.id
+            ORDER BY r.created_at DESC
+        ''')
+        ratings = cursor.fetchall()
+
+        html = '''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Radio Calico - Ratings Database</title>
+            <style>
+                body { font-family: Arial, sans-serif; max-width: 1400px; margin: 30px auto; padding: 20px; }
+                h1 { color: #1F4E23; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                th { background-color: #1F4E23; color: white; position: sticky; top: 0; }
+                tr:hover { background-color: #D8F2D5; }
+                .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 14px; }
+                .badge-up { background: #38A29D; color: white; }
+                .badge-down { background: #EFA63C; color: white; }
+                a { color: #1F4E23; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+                .stats { background: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #38A29D; }
+            </style>
+        </head>
+        <body>
+            <h1>Radio Calico - Ratings Database</h1>
+            <p><a href="/">&larr; Back to API Home</a> | <a href="/tracks">View Tracks</a></p>
+        '''
+
+        # Calculate statistics
+        thumbs_up_count = sum(1 for r in ratings if r['rating_type'] == 1)
+        thumbs_down_count = sum(1 for r in ratings if r['rating_type'] == -1)
+        total_ratings = len(ratings)
+
+        html += f'''
+            <div class="stats">
+                <h3 style="margin-top: 0;">Rating Statistics</h3>
+                <p><strong>Total Ratings:</strong> {total_ratings}</p>
+                <p><strong>Thumbs Up:</strong> {thumbs_up_count} ({(thumbs_up_count/total_ratings*100) if total_ratings > 0 else 0:.1f}%)</p>
+                <p><strong>Thumbs Down:</strong> {thumbs_down_count} ({(thumbs_down_count/total_ratings*100) if total_ratings > 0 else 0:.1f}%)</p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Track ID</th>
+                        <th>Artist</th>
+                        <th>Title</th>
+                        <th>User ID</th>
+                        <th>Rating</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+        '''
+
+        if ratings:
+            for rating in ratings:
+                rating_badge = '<span class="badge badge-up">👍 Thumbs Up</span>' if rating['rating_type'] == 1 else '<span class="badge badge-down">👎 Thumbs Down</span>'
+                html += f'''
+                    <tr>
+                        <td>{rating['id']}</td>
+                        <td>{rating['track_id']}</td>
+                        <td><strong>{rating['artist']}</strong></td>
+                        <td>{rating['title']}</td>
+                        <td>{rating['user_id']}</td>
+                        <td>{rating_badge}</td>
+                        <td>{rating['created_at']}</td>
+                    </tr>
+                '''
+        else:
+            html += '''
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                        No ratings yet. Start listening and rate some tracks!
+                    </td>
                 </tr>
             '''
 
