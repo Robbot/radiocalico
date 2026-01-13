@@ -140,3 +140,4 @@ pkill -f "flask_app.py"
 ```bash
 pkill -f "node server.js" && pkill -f "flask_app.py"
 ```
+### Testing
