@@ -1,0 +1,17 @@
+[Unit]
+Description=RadioCalico Express Frontend Server
+After=network.target
+
+[Service]
+Type=simple
+User=roju
+WorkingDirectory=/home/roju/radiocalico
+Environment="NODE_ENV=production"
+ExecStart=/usr/bin/node /home/roju/radiocalico/server.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/radiocalico-express.log
+StandardError=append:/var/log/radiocalico-express-error.log
+
+[Install]
+WantedBy=multi-user.target

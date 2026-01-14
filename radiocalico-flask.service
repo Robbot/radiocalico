@@ -1,0 +1,18 @@
+[Unit]
+Description=RadioCalico Flask API Backend
+After=network.target
+
+[Service]
+Type=simple
+User=roju
+WorkingDirectory=/home/roju/radiocalico
+Environment="FLASK_ENV=production"
+Environment="FLASK_DEBUG=0"
+ExecStart=/home/roju/radiocalico/venv/bin/python /home/roju/radiocalico/flask_app.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/radiocalico-flask.log
+StandardError=append:/var/log/radiocalico-flask-error.log
+
+[Install]
+WantedBy=multi-user.target
