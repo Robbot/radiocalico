@@ -1,0 +1,103 @@
+# RadioCalico Production Docker Compose Configuration
+# Run with: docker-compose -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  # Express Frontend Server
+  express:
+    build:
+      context: .
+      dockerfile: Dockerfile.express
+      target: production
+    image: radiocalico-express:latest
+    container_name: radiocalico-express
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - FLASK_HOST=flask
+      - FLASK_PORT=5000
+      - DATABASE_PATH=/app/data/database.sqlite
+    volumes:
+      - express_db:/app/data
+    networks:
+      - radiocalico-net
+    depends_on:
+      flask:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/test', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Flask Backend API
+  flask:
+    build:
+      context: .
+      dockerfile: Dockerfile.flask
+    image: radiocalico-flask:latest
+    container_name: radiocalico-flask
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_PORT=5000
+      - FLASK_DATABASE_PATH=/app/data/flask_database.sqlite
+    volumes:
+      - flask_db:/app/data
+    networks:
+      - radiocalico-net
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/test')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Metadata Poller (Background Service)
+  metadata-poller:
+    image: radiocalico-flask:latest
+    container_name: radiocalico-poller
+    environment:
+      - FLASK_DATABASE_PATH=/app/data/flask_database.sqlite
+    volumes:
+      - flask_db:/app/data
+    command: ["python", "metadata_poller.py"]
+    networks:
+      - radiocalico-net
+    depends_on:
+      flask:
+        condition: service_healthy
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+networks:
+  radiocalico-net:
+    name: radiocalico-net
+    driver: bridge
+
+volumes:
+  express_db:
+    name: radiocalico_express_db
+  flask_db:
+    name: radiocalico_flask_db

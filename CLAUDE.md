@@ -45,11 +45,17 @@ radiocalico/
 ├── install-services.sh        # Systemd service installation
 ├── .env                       # Environment configuration
 ├── package.json               # Node.js dependencies
+├── requirements.txt           # Python dependencies (for Docker)
 ├── venv/                      # Python virtual environment
 ├── database.sqlite            # Express database
 ├── flask_database.sqlite      # Flask database (tracks, ratings)
 ├── radiocalico-express.service   # Systemd service config (Express)
 ├── radiocalico-flask.service     # Systemd service config (Flask)
+├── Dockerfile.express         # Docker image for Express frontend
+├── Dockerfile.flask           # Docker image for Flask backend + poller
+├── docker-compose.dev.yml     # Development Docker compose
+├── docker-compose.prod.yml    # Production Docker compose
+├── .dockerignore              # Docker build exclusions
 ├── stream_URL.txt             # HLS stream URL
 ├── RadioCalico_Style_Guide.txt  # Brand guidelines
 └── public/
@@ -73,11 +79,19 @@ radiocalico/
 ## Environment Variables
 
 ```
+# Express (Node.js)
 PORT=3000                          # Express port
 DATABASE_PATH=./database.sqlite    # Express database
+FLASK_HOST=localhost               # Flask hostname (use 'flask' for Docker)
+FLASK_PORT=5000                    # Flask port
 
+# Flask (Python)
 FLASK_PORT=5000                    # Flask port
 FLASK_DATABASE_PATH=./flask_database.sqlite  # Flask database
+FLASK_ENV=development              # development|production (controls debug mode)
+
+# Docker
+NODE_ENV=development               # development|production
 ```
 
 ## Development Workflow
@@ -208,7 +222,7 @@ RadioCalico uses a comprehensive brand identity:
 - [ ] Add podcast-style on-demand content
 - [ ] Implement proper error handling and logging
 - [ ] Add database migrations (Alembic for Flask)
-- [ ] Create Docker setup for easier deployment
+- [x] Create Docker setup for easier deployment
 - [ ] Add test suites for both backends
 - [ ] Implement CI/CD pipeline
 - [ ] Add analytics and usage tracking
@@ -225,6 +239,7 @@ RadioCalico uses a comprehensive brand identity:
 - HLS stream URL is stored in `stream_URL.txt`
 - Brand guidelines are in `RadioCalico_Style_Guide.txt`
 - systemd services are configured for production deployment
+- Docker containers are configured for both development and production
 - All dependencies are locally installed (Node modules, Python venv)
 - No sudo required for development (required for service installation)
 
@@ -256,3 +271,47 @@ When working with Claude Code on this project:
 - Use systemd services for 24/7 operation
 - Logs available via `journalctl -u radiocalico-express` and `journalctl -u radiocalico-flask`
 - Restart services: `sudo systemctl restart radiocalico-express radiocalico-flask`
+
+### Docker Deployment
+
+#### Development
+```bash
+# Build and start all services
+docker-compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.dev.yml down
+```
+
+#### Production
+```bash
+# Build and start all services
+docker-compose -f docker-compose.prod.yml up -d
+
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.prod.yml down
+
+# Backup databases
+docker run --rm -v radiocalico_flask_db:/data -v $(pwd):/backup alpine tar czf /backup/backup.tar.gz /data
+```
+
+#### Docker Services
+- **express**: Frontend server (port 3000) with hot reload in dev mode
+- **flask**: Backend API (port 5000) with health checks
+- **metadata-poller**: Background service fetching track metadata
+- **volumes**: `express_db` and `flask_db` for data persistence
+- **network**: `radiocalico-net` for service communication
+
+#### Environment Variables
+- `FLASK_HOST`: Docker service name for Flask (default: `flask`)
+- `FLASK_PORT`: Flask port (default: 5000)
+- `NODE_ENV`: development or production
+- `FLASK_ENV`: development or production (controls debug mode)
+- `DATABASE_PATH`: Express database path (default: `/app/data/database.sqlite`)
+- `FLASK_DATABASE_PATH`: Flask database path (default: `/app/data/flask_database.sqlite`)

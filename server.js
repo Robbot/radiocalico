@@ -7,6 +7,7 @@ const db = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const FLASK_HOST = process.env.FLASK_HOST || 'localhost';
 const FLASK_PORT = process.env.FLASK_PORT || 5000;
 
 app.use(express.json());
@@ -47,7 +48,7 @@ app.get('/api/test', (req, res) => {
 // Proxy endpoints to Flask API
 app.get('/api/now-playing', (req, res) => {
   const options = {
-    hostname: 'localhost',
+    hostname: FLASK_HOST,
     port: FLASK_PORT,
     path: '/api/now-playing',
     method: 'GET'
@@ -76,7 +77,7 @@ app.get('/api/now-playing', (req, res) => {
 
 app.get('/api/recently-played', (req, res) => {
   const options = {
-    hostname: 'localhost',
+    hostname: FLASK_HOST,
     port: FLASK_PORT,
     path: '/api/recently-played',
     method: 'GET'
@@ -105,7 +106,7 @@ app.get('/api/recently-played', (req, res) => {
 
 app.post('/api/update-track', (req, res) => {
   const options = {
-    hostname: 'localhost',
+    hostname: FLASK_HOST,
     port: FLASK_PORT,
     path: '/api/update-track',
     method: 'POST',
@@ -139,7 +140,7 @@ app.post('/api/update-track', (req, res) => {
 // Proxy rating endpoints to Flask
 app.post('/api/tracks/:trackId/rate', (req, res) => {
   const options = {
-    hostname: 'localhost',
+    hostname: FLASK_HOST,
     port: FLASK_PORT,
     path: `/api/tracks/${req.params.trackId}/rate`,
     method: 'POST',
@@ -172,7 +173,7 @@ app.post('/api/tracks/:trackId/rate', (req, res) => {
 
 app.post('/api/tracks/:trackId/rating-status', (req, res) => {
   const options = {
-    hostname: 'localhost',
+    hostname: FLASK_HOST,
     port: FLASK_PORT,
     path: `/api/tracks/${req.params.trackId}/rating-status`,
     method: 'POST',

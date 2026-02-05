@@ -1,0 +1,63 @@
+# Node modules
+node_modules/
+npm-debug.log*
+
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Database files (will be in volumes)
+*.sqlite
+*.sqlite3
+
+# Environment files (use docker-compose env instead)
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker (avoid recursion)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+CLAUDE.md
+README.md
+*.md
+
+# Test files
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+
+# Temporary files
+tmp/
+temp/

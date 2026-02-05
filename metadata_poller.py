@@ -4,6 +4,7 @@ Radio Calico Metadata Poller
 Fetches real track information from the stream's metadata API
 """
 
+import os
 import sqlite3
 import time
 import requests
@@ -11,7 +12,7 @@ from datetime import datetime
 
 METADATA_URL = 'https://d3d4yli4hf5bmh.cloudfront.net/metadatav2.json'
 COVER_ART_URL = 'https://d3d4yli4hf5bmh.cloudfront.net/cover.jpg'
-DATABASE = './flask_database.sqlite'
+DATABASE = os.getenv('FLASK_DATABASE_PATH', './flask_database.sqlite')
 POLL_INTERVAL = 15  # Check every 15 seconds
 
 def get_db():
