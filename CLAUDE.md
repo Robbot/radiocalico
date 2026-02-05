@@ -9,7 +9,7 @@ This document tracks the AI-assisted development of RadioCalico, including setup
 ## Project Genesis
 
 **Date**: 2026-01-03
-**AI Assistant**: Claude Sonnet 4.5
+**AI Assistants**: Claude Sonnet 4.5, Claude Opus 4.5, Claude GLM-4.7
 **Initial Request**: Install and configure a web server and database for local prototyping
 
 **Evolution**: The project evolved from a generic web development setup to a full-featured radio streaming platform with HLS (HTTP Live Streaming), real-time metadata fetching, user ratings, and production deployment capabilities.
@@ -41,11 +41,16 @@ radiocalico/
 ├── database.js                # Express SQLite configuration
 ├── flask_app.py               # Flask API backend (port 5000)
 ├── metadata_poller.py         # Live metadata fetching service
+├── track_rotator.py           # Simulates live radio track rotation
 ├── start_flask.sh             # Flask startup script
 ├── install-services.sh        # Systemd service installation
+├── uninstall-services.sh      # Systemd service removal
 ├── .env                       # Environment configuration
-├── package.json               # Node.js dependencies
+├── package.json               # Node.js dependencies and scripts
 ├── requirements.txt           # Python dependencies (for Docker)
+├── requirements-test.txt      # Python testing dependencies
+├── vitest.config.js           # Vitest config for frontend tests
+├── vitest.express.config.js   # Vitest config for Express API tests
 ├── venv/                      # Python virtual environment
 ├── database.sqlite            # Express database
 ├── flask_database.sqlite      # Flask database (tracks, ratings)
@@ -58,6 +63,21 @@ radiocalico/
 ├── .dockerignore              # Docker build exclusions
 ├── stream_URL.txt             # HLS stream URL
 ├── RadioCalico_Style_Guide.txt  # Brand guidelines
+├── CLAUDE.md                  # This development documentation
+├── README.md                  # User-facing documentation
+├── tests/                     # Test suites
+│   ├── frontend/              # Frontend JavaScript tests (Vitest)
+│   │   ├── fixtures/          # Test data fixtures
+│   │   ├── player.test.js     # Player functionality tests
+│   │   └── ratings.test.js    # Rating UI tests
+│   ├── express/               # Express API tests (Vitest)
+│   │   ├── server.test.js     # Server endpoint tests
+│   │   └── ratings.test.js    # Rating API tests
+│   └── flask/                 # Flask API tests (pytest)
+│       ├── conftest.py        # Pytest fixtures
+│       ├── test_tracks.py     # Track API tests
+│       ├── test_ratings.py    # Rating API tests
+│       └── test_database.py   # Database tests
 └── public/
     ├── index.html             # Main radio player interface
     ├── admin.html             # Administrative interface
@@ -94,6 +114,63 @@ FLASK_ENV=development              # development|production (controls debug mode
 NODE_ENV=development               # development|production
 ```
 
+## Testing Framework
+
+RadioCalico uses a comprehensive testing setup covering all components:
+
+### Frontend Tests (Vitest + jsdom)
+- **Framework**: Vitest with jsdom environment
+- **Config**: `vitest.config.js`
+- **Location**: `tests/frontend/`
+- **Coverage**: V8 provider with HTML, text, and JSON reports
+
+```bash
+# Run frontend tests
+npm run test:frontend
+
+# Watch mode for development
+npm run test:frontend:watch
+
+# Generate coverage report
+npm run test:frontend:coverage
+```
+
+### Express API Tests (Vitest + supertest)
+- **Framework**: Vitest with supertest for HTTP assertions
+- **Config**: `vitest.express.config.js`
+- **Location**: `tests/express/`
+
+```bash
+# Run Express API tests
+npm run test:express
+```
+
+### Flask API Tests (pytest)
+- **Framework**: pytest with Flask plugin
+- **Dependencies**: `requirements-test.txt`
+- **Location**: `tests/flask/`
+- **Features**: Coverage reporting, async support, mocking
+
+```bash
+# Run Flask tests
+npm run test:flask
+
+# Verbose output
+npm run test:flask:verbose
+
+# Generate HTML coverage
+npm run test:flask:coverage
+```
+
+### Run All Tests
+```bash
+# Run all tests (Node.js only)
+npm test
+
+# Run all tests including Python
+npm run test:all
+```
+
 ## Development Workflow
 
 ### Starting Servers
@@ -106,8 +183,16 @@ NODE_ENV=development               # development|production
 - Flask: `pkill -f "flask_app.py"`
 - Both: `pkill -f "node server.js" && pkill -f "flask_app.py"`
 
+### Track Rotation Simulator
+For testing without live metadata API, use the track rotator:
+- Start: `python track_rotator.py`
+- Rotates through classic tracks every 3 minutes
+- Updates Flask database with simulated "now playing"
+- Press Ctrl+C to stop
+
 ### Production Deployment
 - Install systemd services: `sudo ./install-services.sh`
+- Uninstall systemd services: `sudo ./uninstall-services.sh`
 - Services auto-start on boot
 - Express service: `radiocalico-express.service`
 - Flask service: `radiocalico-flask.service`
@@ -223,7 +308,7 @@ RadioCalico uses a comprehensive brand identity:
 - [ ] Implement proper error handling and logging
 - [ ] Add database migrations (Alembic for Flask)
 - [x] Create Docker setup for easier deployment
-- [ ] Add test suites for both backends
+- [x] Add test suites for both backends
 - [ ] Implement CI/CD pipeline
 - [ ] Add analytics and usage tracking
 - [ ] Create user dashboard with listening history
@@ -242,6 +327,8 @@ RadioCalico uses a comprehensive brand identity:
 - Docker containers are configured for both development and production
 - All dependencies are locally installed (Node modules, Python venv)
 - No sudo required for development (required for service installation)
+- Testing framework uses Vitest (JS) and pytest (Python)
+- Track rotator provides simulated live radio for development/testing
 
 ## Collaboration Tips
 
@@ -251,14 +338,22 @@ When working with Claude Code on this project:
 1. Use `npm start` to run Express frontend
 2. Use `./start_flask.sh` to run Flask backend
 3. Use `python metadata_poller.py` to fetch live metadata
-4. Check both databases are initialized before testing
+4. Use `python track_rotator.py` for simulated track rotation (testing)
+5. Check both databases are initialized before testing
+6. Run `npm test` to execute all JavaScript tests
+7. Run `npm run test:flask` to execute Python tests
 
 ### File Locations
 - Frontend changes: `public/` directory
+- Frontend tests: `tests/frontend/`
 - Express server: `server.js`
+- Express tests: `tests/express/`
 - Flask API: `flask_app.py`
+- Flask tests: `tests/flask/`
 - Metadata polling: `metadata_poller.py`
+- Track rotation simulator: `track_rotator.py`
 - Database schemas: `database.js` (Express), `flask_app.py` init_db() (Flask)
+- Test configs: `vitest.config.js`, `vitest.express.config.js`, `tests/flask/conftest.py`
 
 ### Testing
 - Frontend: http://localhost:3000
