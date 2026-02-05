@@ -17,7 +17,15 @@
       "Bash(./venv/bin/pip:*)",
       "Bash(sqlite3:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nUpdate Claude settings with additional command permissions\n\nAdded permissions for database queries, Python venv operations, and file\nsystem commands needed for metadata poller diagnostics.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nUpdate Claude settings with additional command permissions\n\nAdded permissions for database queries, Python venv operations, and file\nsystem commands needed for metadata poller diagnostics.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(npm install:*)",
+      "Bash(pip install:*)",
+      "Bash(source:*)",
+      "Bash(npm run test:*)",
+      "Bash(pytest:*)",
+      "Bash(npm run test:express:*)"
     ]
   }
 }

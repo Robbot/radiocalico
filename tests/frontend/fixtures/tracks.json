@@ -1,0 +1,54 @@
+{
+  "currentTrack": {
+    "id": 1,
+    "artist": "Shandi Sinnamon",
+    "title": "He's A Dream",
+    "album": "Flashdance (Original Motion Picture Soundtrack)",
+    "year": 1983,
+    "album_art_url": "https://via.placeholder.com/300x300/231F20/D8F2D5?text=Shandi",
+    "thumbs_up": 25,
+    "thumbs_down": 3
+  },
+  "recentlyPlayed": [
+    {
+      "id": 2,
+      "artist": "TLC",
+      "title": "Ain't 2 Proud 2 Beg",
+      "album": "Ooooooohhh... On the TLC Tip",
+      "year": 1992
+    },
+    {
+      "id": 3,
+      "artist": "The Raconteurs",
+      "title": "Steady, As She Goes",
+      "album": "Broken Boy Soldiers",
+      "year": 2006
+    }
+  ],
+  "ratingSuccess": {
+    "status": "success",
+    "message": "Rating submitted successfully",
+    "data": {
+      "thumbs_up": 26,
+      "thumbs_down": 3
+    }
+  },
+  "ratingError": {
+    "status": "error",
+    "message": "You have already rated this track"
+  },
+  "ratingStatus": {
+    "status": "success",
+    "data": {
+      "has_rated": false,
+      "rating_type": null
+    }
+  },
+  "ratingStatusRated": {
+    "status": "success",
+    "data": {
+      "has_rated": true,
+      "rating_type": 1
+    }
+  }
+}

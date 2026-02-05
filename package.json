@@ -3,10 +3,19 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test:frontend && npm run test:express",
+    "test:frontend": "vitest --config vitest.config.js",
+    "test:frontend:watch": "vitest --config vitest.config.js --watch",
+    "test:frontend:coverage": "vitest --config vitest.config.js --coverage",
+    "test:express": "node --experimental-vm-modules node_modules/.bin/vitest --config vitest.express.config.js",
+    "test:flask": "pytest tests/flask/",
+    "test:flask:verbose": "pytest tests/flask/ -v",
+    "test:flask:coverage": "pytest tests/flask/ --cov=../flask_app.py --cov-report=html",
+    "test:all": "npm run test && npm run test:flask"
   },
   "keywords": [],
   "author": "",
@@ -16,5 +25,11 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.0.0",
+    "jsdom": "^23.0.0",
+    "supertest": "^6.3.0",
+    "vitest": "^1.0.0"
   }
 }
