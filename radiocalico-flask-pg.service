@@ -1,0 +1,23 @@
+[Unit]
+Description=RadioCalico Flask API Backend (PostgreSQL)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=roju
+WorkingDirectory=/home/roju/radiocalico
+Environment="FLASK_ENV=production"
+Environment="FLASK_DEBUG=0"
+Environment="POSTGRES_HOST=localhost"
+Environment="POSTGRES_PORT=5432"
+Environment="POSTGRES_DB=radiocalico"
+Environment="POSTGRES_USER=radiocalico"
+Environment="POSTGRES_PASSWORD=CHANGE_ME"
+ExecStart=/home/roju/radiocalico/venv/bin/python /home/roju/radiocalico/flask_app_postgres.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/radiocalico-flask.log
+StandardError=append:/var/log/radiocalico-flask-error.log
+
+[Install]
+WantedBy=multi-user.target

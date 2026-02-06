@@ -16,15 +16,16 @@
 
 ## Tech Stack
 
-### Frontend
-- **Server**: Express.js (Port 3000)
-- **Streaming**: hls.js for HLS playback
-- **Database**: SQLite (better-sqlite3)
+### Development/Simple Deployment
+- **Frontend**: Express.js (Port 3000)
+- **Backend**: Flask (Port 5000)
+- **Databases**: SQLite (better-sqlite3, sqlite3)
 
-### Backend API
-- **Server**: Flask (Port 5000)
-- **Database**: SQLite with custom ORM
-- **Features**: Track management, user ratings, metadata polling
+### Production Deployment (Recommended)
+- **Frontend**: Nginx (Port 80)
+- **Backend**: Flask (Port 5000)
+- **Database**: PostgreSQL 16
+- **Streaming**: hls.js for HLS playback
 
 ### Streaming
 - **Protocol**: HLS (HTTP Live Streaming)
@@ -113,6 +114,8 @@ python metadata_poller.py
 
 #### Production Mode
 
+**Option 1: SQLite + Express (Simple)**
+
 Install as systemd services:
 ```bash
 sudo ./install-services.sh
@@ -135,6 +138,53 @@ sudo systemctl restart radiocalico-express radiocalico-flask
 # View logs
 sudo journalctl -u radiocalico-express -f
 sudo journalctl -u radiocalico-flask -f
+```
+
+**Option 2: PostgreSQL + Nginx (Recommended for Production)**
+
+For production environments requiring better scalability:
+- **PostgreSQL** for true concurrent database access
+- **Nginx** for efficient static file serving and reverse proxy
+
+Prerequisites:
+- PostgreSQL 16
+- Nginx
+- Python 3.11+
+
+Install using Docker (recommended):
+```bash
+# Set PostgreSQL password
+export POSTGRES_PASSWORD=your_secure_password
+
+# Build and start all services
+docker-compose -f docker-compose.pgprod.yml up -d
+
+# View logs
+docker-compose -f docker-compose.pgprod.yml logs -f
+```
+
+Or install as systemd services:
+```bash
+sudo ./install-services-pg.sh
+```
+
+This will:
+- Setup PostgreSQL database and user
+- Configure Nginx with custom config
+- Install systemd services for Nginx, Flask, and metadata poller
+- Start all services
+
+Manage services:
+```bash
+# Check status
+sudo systemctl status radiocalico-nginx radiocalico-flask-pg radiocalico-metadata-poller-pg
+
+# Restart services
+sudo systemctl restart radiocalico-nginx radiocalico-flask-pg
+
+# View logs
+sudo journalctl -u radiocalico-nginx -f
+sudo journalctl -u radiocalico-flask-pg -f
 ```
 
 ### Stopping the Application

@@ -1,0 +1,21 @@
+[Unit]
+Description=RadioCalico Metadata Poller (PostgreSQL)
+After=network.target postgresql.service radiocalico-flask-pg.service
+
+[Service]
+Type=simple
+User=roju
+WorkingDirectory=/home/roju/radiocalico
+Environment="POSTGRES_HOST=localhost"
+Environment="POSTGRES_PORT=5432"
+Environment="POSTGRES_DB=radiocalico"
+Environment="POSTGRES_USER=radiocalico"
+Environment="POSTGRES_PASSWORD=CHANGE_ME"
+ExecStart=/home/roju/radiocalico/venv/bin/python /home/roju/radiocalico/metadata_poller_postgres.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/radiocalico-poller.log
+StandardError=append:/var/log/radiocalico-poller-error.log
+
+[Install]
+WantedBy=multi-user.target

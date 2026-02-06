@@ -197,6 +197,226 @@ For testing without live metadata API, use the track rotator:
 - Express service: `radiocalico-express.service`
 - Flask service: `radiocalico-flask.service`
 
+## PostgreSQL + Nginx Production Deployment
+
+**Date**: 2026-02-06
+**Migration**: SQLite → PostgreSQL, Express → Nginx
+
+For production environments requiring better scalability and performance, RadioCalico now supports PostgreSQL with Nginx as the web server.
+
+### Architecture Changes
+
+#### PostgreSQL Backend
+- **Database**: PostgreSQL 16 (replaces SQLite)
+- **Connection Pooling**: psycopg2 with SimpleConnectionPool
+- **Benefits**: Better concurrent access, ACID compliance, production-ready
+
+#### Nginx Frontend
+- **Web Server**: Nginx (replaces Express.js)
+- **Port**: 80 (standard HTTP port)
+- **Benefits**: Better performance, lower memory, production-proven
+
+### New File Structure (PostgreSQL Deployment)
+
+```
+radiocalico/
+├── flask_app_postgres.py       # Flask app with PostgreSQL support
+├── metadata_poller_postgres.py # Metadata poller with PostgreSQL
+├── nginx.conf                  # Nginx configuration
+├── Dockerfile.nginx            # Nginx Docker image
+├── Dockerfile.flask-pg         # Flask + PostgreSQL Docker image
+├── docker-compose.pgprod.yml   # PostgreSQL + Nginx compose file
+├── radiocalico-nginx.service   # Nginx systemd service
+├── radiocalico-flask-pg.service # Flask + PostgreSQL systemd service
+├── radiocalico-metadata-poller-pg.service # Poller + PostgreSQL service
+├── install-services-pg.sh      # PostgreSQL deployment installer
+├── uninstall-services-pg.sh    # PostgreSQL deployment uninstaller
+└── .env.postgres.example       # Environment variable template
+```
+
+### PostgreSQL Schema
+
+```sql
+-- Users table
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Posts table
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    user_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- Tracks table
+CREATE TABLE tracks (
+    id SERIAL PRIMARY KEY,
+    artist TEXT NOT NULL,
+    title TEXT NOT NULL,
+    album TEXT,
+    year INTEGER,
+    album_art_url TEXT,
+    played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_current BOOLEAN DEFAULT FALSE
+);
+
+-- Ratings table
+CREATE TABLE ratings (
+    id SERIAL PRIMARY KEY,
+    track_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    rating_type INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (track_id) REFERENCES tracks (id),
+    UNIQUE (track_id, user_id)
+);
+```
+
+### Environment Variables (PostgreSQL)
+
+```
+# PostgreSQL Configuration
+POSTGRES_HOST=postgres          # PostgreSQL hostname (localhost or docker service)
+POSTGRES_PORT=5432              # PostgreSQL port
+POSTGRES_DB=radiocalico         # Database name
+POSTGRES_USER=radiocalico       # Database user
+POSTGRES_PASSWORD=your_password # Database password
+
+# Flask Configuration
+FLASK_ENV=production            # production|development
+FLASK_PORT=5000                 # Flask port
+```
+
+### Docker Deployment (PostgreSQL)
+
+```bash
+# Set PostgreSQL password (optional, default is radiocalico123)
+export POSTGRES_PASSWORD=your_secure_password
+
+# Build and start all services
+docker-compose -f docker-compose.pgprod.yml up -d
+
+# View logs
+docker-compose -f docker-compose.pgprod.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.pgprod.yml down
+
+# Backup PostgreSQL database
+docker exec radiocalico-postgres pg_dump -U radiocalico radiocalico > backup.sql
+
+# Restore PostgreSQL database
+docker exec -i radiocalico-postgres psql -U radiocalico radiocalico < backup.sql
+```
+
+### Systemd Deployment (PostgreSQL)
+
+Prerequisites:
+- PostgreSQL 16 installed
+- Nginx installed
+- Python virtual environment configured
+
+```bash
+# Install services (interactive setup)
+sudo ./install-services-pg.sh
+
+# Check service status
+sudo systemctl status radiocalico-nginx
+sudo systemctl status radiocalico-flask-pg
+sudo systemctl status radiocalico-metadata-poller-pg
+
+# View logs
+sudo journalctl -u radiocalico-nginx -f
+sudo journalctl -u radiocalico-flask-pg -f
+
+# Uninstall services
+sudo ./uninstall-services-pg.sh
+```
+
+### API Endpoints (Nginx + Flask)
+
+All requests go through Nginx (port 80), which proxies API calls to Flask:
+
+#### Nginx (http://localhost)
+- `GET /` - Main radio player interface
+- `GET /admin` - Administrative interface
+- `GET /health` - Health check endpoint
+- All static files served from `/usr/share/nginx/html`
+
+#### Flask (via Nginx proxy)
+- `GET /api/stream-url` - Fetch HLS stream URL
+- `GET /api/test` - Database connection test
+- `GET /api/now-playing` - Current track with ratings
+- `GET /api/recently-played` - Previous 5 tracks
+- `POST /api/tracks/:id/rate` - User rating (thumbs up/down)
+- `POST /api/tracks/:id/rating-status` - Check user's rating
+- `POST /api/update-track` - Manual track metadata update
+- `GET /tracks` - Database view (admin)
+- `GET /ratings` - Rating statistics
+
+### Key Differences from SQLite Deployment
+
+| Aspect | SQLite + Express | PostgreSQL + Nginx |
+|--------|-----------------|-------------------|
+| Database | SQLite file | PostgreSQL server |
+| Connection | Direct file access | Network connection with pooling |
+| Frontend Server | Express.js (Node.js) | Nginx (C) |
+| Port | 3000 | 80 |
+| Static Files | Express static middleware | Nginx static file serving |
+| API Proxy | Express http.request | Nginx proxy_pass |
+| Scalability | Limited by file locks | True concurrent access |
+| Memory Usage | Higher (Node.js runtime) | Lower (Nginx efficiency) |
+
+### Why PostgreSQL + Nginx for Production?
+
+1. **PostgreSQL Benefits**:
+   - True concurrent read/write operations
+   - Better data integrity with foreign keys and constraints
+   - Indexed lookups on large datasets
+   - Backup/restore with pg_dump
+   - Connection pooling for high-traffic scenarios
+   - Transaction isolation levels
+
+2. **Nginx Benefits**:
+   - Lower memory footprint
+   - Higher performance for static files
+   - Built-in load balancing capabilities
+   - Better SSL/TLS termination support
+   - Industry-standard for production deployments
+   - Efficient reverse proxy
+
+### Migration Notes
+
+When migrating from SQLite to PostgreSQL:
+
+1. **Data Migration**:
+   ```bash
+   # Export SQLite data
+   sqlite3 flask_database.sqlite .dump > dump.sql
+
+   # Convert to PostgreSQL format (manual edits needed):
+   # - Replace AUTOINCREMENT with SERIAL
+   # - Replace ? with %s placeholders
+   # - Change BOOLEAN to TRUE/FALSE
+   ```
+
+2. **Application Changes**:
+   - All database queries use parameter substitution (%s instead of ?)
+   - Connection pool management for better resource utilization
+   - Retry logic for initial database connection
+
+3. **Configuration Changes**:
+   - Nginx handles all static file serving
+   - Flask only handles API requests
+   - `/api/stream-url` endpoint moved from Express to Flask
+
 ## API Endpoints
 
 ### Express (http://localhost:3000)

@@ -1,0 +1,131 @@
+# RadioCalico Production Docker Compose Configuration
+# PostgreSQL + Nginx + Flask deployment
+# Run with: docker-compose -f docker-compose.pgprod.yml up -d
+
+version: '3.8'
+
+services:
+  # Nginx Frontend Server
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    image: radiocalico-nginx:latest
+    container_name: radiocalico-nginx
+    ports:
+      - "80:80"
+    networks:
+      - radiocalico-net
+    depends_on:
+      flask:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Flask Backend API
+  flask:
+    build:
+      context: .
+      dockerfile: Dockerfile.flask-pg
+    image: radiocalico-flask-pg:latest
+    container_name: radiocalico-flask
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_PORT=5000
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=radiocalico
+      - POSTGRES_USER=radiocalico
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiocalico123}
+    networks:
+      - radiocalico-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/test')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: radiocalico-postgres
+    environment:
+      - POSTGRES_DB=radiocalico
+      - POSTGRES_USER=radiocalico
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiocalico123}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    networks:
+      - radiocalico-net
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radiocalico -d radiocalico"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Metadata Poller (Background Service)
+  metadata-poller:
+    build:
+      context: .
+      dockerfile: Dockerfile.flask-pg
+    image: radiocalico-flask-pg:latest
+    container_name: radiocalico-poller
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=radiocalico
+      - POSTGRES_USER=radiocalico
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiocalico123}
+    command: ["python", "metadata_poller_postgres.py"]
+    networks:
+      - radiocalico-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      flask:
+        condition: service_healthy
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+networks:
+  radiocalico-net:
+    name: radiocalico-net
+    driver: bridge
+
+volumes:
+  postgres_db:
+    name: radiocalico_postgres_db
