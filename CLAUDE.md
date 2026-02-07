@@ -14,6 +14,12 @@ This document tracks the AI-assisted development of RadioCalico, including setup
 
 **Evolution**: The project evolved from a generic web development setup to a full-featured radio streaming platform with HLS (HTTP Live Streaming), real-time metadata fetching, user ratings, and production deployment capabilities.
 
+### Timeline
+
+- **2026-01-03**: Project inception with Express.js + Flask dual backend
+- **2026-02-06**: PostgreSQL + Nginx production deployment option added
+- **2026-02-07**: Security audit capabilities (npm audit, Makefile) added
+
 ## Technology Stack
 
 ### Frontend
@@ -61,19 +67,23 @@ radiocalico/
 ├── docker-compose.dev.yml     # Development Docker compose
 ├── docker-compose.prod.yml    # Production Docker compose
 ├── .dockerignore              # Docker build exclusions
+├── Makefile                   # Build automation and security commands
 ├── stream_URL.txt             # HLS stream URL
 ├── RadioCalico_Style_Guide.txt  # Brand guidelines
 ├── CLAUDE.md                  # This development documentation
 ├── README.md                  # User-facing documentation
 ├── tests/                     # Test suites
 │   ├── frontend/              # Frontend JavaScript tests (Vitest)
+│   │   ├── README.md          # Frontend test documentation
 │   │   ├── fixtures/          # Test data fixtures
 │   │   ├── player.test.js     # Player functionality tests
 │   │   └── ratings.test.js    # Rating UI tests
 │   ├── express/               # Express API tests (Vitest)
+│   │   ├── README.md          # Express test documentation
 │   │   ├── server.test.js     # Server endpoint tests
 │   │   └── ratings.test.js    # Rating API tests
 │   └── flask/                 # Flask API tests (pytest)
+│       ├── README.md          # Flask test documentation
 │       ├── conftest.py        # Pytest fixtures
 │       ├── test_tracks.py     # Track API tests
 │       ├── test_ratings.py    # Rating API tests
@@ -102,7 +112,7 @@ radiocalico/
 # Express (Node.js)
 PORT=3000                          # Express port
 DATABASE_PATH=./database.sqlite    # Express database
-FLASK_HOST=localhost               # Flask hostname (use 'flask' for Docker)
+FLASK_HOST=localhost               # Flask hostname (use 'flask' for Docker; defaults to localhost if not set)
 FLASK_PORT=5000                    # Flask port
 
 # Flask (Python)
@@ -113,6 +123,8 @@ FLASK_ENV=development              # development|production (controls debug mode
 # Docker
 NODE_ENV=development               # development|production
 ```
+
+**Note**: `FLASK_HOST` is optional and defaults to `localhost`. For Docker deployments, set it to `flask` (the Docker service name).
 
 ## Testing Framework
 
@@ -169,6 +181,59 @@ npm test
 
 # Run all tests including Python
 npm run test:all
+```
+
+## Security Testing
+
+RadioCalico includes security audit capabilities to identify and fix vulnerabilities in Node.js dependencies.
+
+### NPM Audit Commands
+
+```bash
+# Run full security audit (all dependencies)
+npm audit
+
+# Run audit on production dependencies only
+npm audit --omit=dev
+
+# Auto-fix vulnerabilities where possible
+npm audit fix
+```
+
+### Makefile Targets
+
+The Makefile provides convenient targets for security operations:
+
+```bash
+# Run security audit (all dependencies)
+make security
+# or
+make audit
+
+# Audit development dependencies only
+make audit-dev
+
+# Auto-fix vulnerabilities
+make security-fix
+```
+
+### Security Workflow
+
+1. **Regular Audits**: Run `make security` before committing changes or deploying
+2. **Review Results**: Check audit output for vulnerability severity and affected packages
+3. **Fix Vulnerabilities**:
+   - Run `make security-fix` for automatic fixes
+   - Manual updates may be required for some vulnerabilities
+   - Use `npm update package@version` for targeted updates
+4. **Verify**: Re-run `make security` to confirm all issues are resolved
+
+### Integration with CI
+
+Security audits are integrated into the development workflow:
+
+```bash
+# Run full test suite including security
+make test-all && make security
 ```
 
 ## Development Workflow
@@ -529,6 +594,7 @@ RadioCalico uses a comprehensive brand identity:
 - [ ] Add database migrations (Alembic for Flask)
 - [x] Create Docker setup for easier deployment
 - [x] Add test suites for both backends
+- [x] Add security audit capabilities (npm audit, Makefile targets)
 - [ ] Implement CI/CD pipeline
 - [ ] Add analytics and usage tracking
 - [ ] Create user dashboard with listening history
@@ -548,6 +614,7 @@ RadioCalico uses a comprehensive brand identity:
 - All dependencies are locally installed (Node modules, Python venv)
 - No sudo required for development (required for service installation)
 - Testing framework uses Vitest (JS) and pytest (Python)
+- Security audits available via `npm audit` or `make security`
 - Track rotator provides simulated live radio for development/testing
 
 ## Collaboration Tips
@@ -562,6 +629,7 @@ When working with Claude Code on this project:
 5. Check both databases are initialized before testing
 6. Run `npm test` to execute all JavaScript tests
 7. Run `npm run test:flask` to execute Python tests
+8. Run `make security` or `npm audit` for security vulnerability checks
 
 ### File Locations
 - Frontend changes: `public/` directory
