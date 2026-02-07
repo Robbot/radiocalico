@@ -15,7 +15,10 @@
     "test:flask": "pytest tests/flask/",
     "test:flask:verbose": "pytest tests/flask/ -v",
     "test:flask:coverage": "pytest tests/flask/ --cov=../flask_app.py --cov-report=html",
-    "test:all": "npm run test && npm run test:flask"
+    "test:all": "npm run test && npm run test:flask",
+    "audit": "npm audit",
+    "audit:fix": "npm audit fix",
+    "audit:dev": "npm audit --omit=prod"
   },
   "keywords": [],
   "author": "",
