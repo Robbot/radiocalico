@@ -106,7 +106,7 @@ services:
       - POSTGRES_DB=radiocalico
       - POSTGRES_USER=radiocalico
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiocalico123}
-    command: ["python", "metadata_poller_postgres.py"]
+    command: ["python", "metadata_poller.py"]
     networks:
       - radiocalico-net
     depends_on:
